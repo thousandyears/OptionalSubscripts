@@ -16,4 +16,22 @@ final class Location™: Hopes {
 
         hope(o.key) == "👋"
     }
+    
+    func test_comparable() throws {
+        
+        var l: Optional<Any>.Location
+        var r: Optional<Any>.Location
+
+        (l, r) = (5, "5")
+        hope.true(l < r)
+
+        (l, r) = ("5", 5)
+        hope.false(l < r)
+
+        (l, r) = (4, 5)
+        hope.true(l < r)
+
+        (l, r) = ("4", "5")
+        hope.true(l < r)
+    }
 }

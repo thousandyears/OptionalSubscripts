@@ -60,6 +60,18 @@ extension Optional.Location: ExpressibleByIntegerLiteral where Wrapped == Any {
     }
 }
 
+extension Optional.Location: Comparable where Wrapped == Any {
+    
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+        case (.index, .key): return true
+        case (.key, .index): return false
+        case let (.index(l), .index(r)): return l < r
+        case let (.key(l), .key(r)): return l < r
+        }
+    }
+}
+
 extension Optional.Location: Equatable where Wrapped == Any {
 
     @inlinable public static func == (lhs: Self, rhs: Self) -> Bool {
