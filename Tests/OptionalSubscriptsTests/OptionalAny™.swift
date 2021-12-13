@@ -26,6 +26,7 @@ final class OptionalAny™: Hopes {
 
         o["one", 2] = ["three": 4]
         try hope(o["one", 2, "three"]) == 4
+        try hope(o[\.["one"][2]["three"]]) == 4
 
         o["one", 2] = nil
         hope.true(o["one"] == nil)

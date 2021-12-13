@@ -89,6 +89,12 @@ extension Optional: Castable where Wrapped == Any {
             try self[keyPath: Any?.keyPath(route)].cast()
         }
     }
+    
+    public subscript<A>(path: KeyPath, as type: A.Type = A.self) -> A {
+        get throws {
+            try self[keyPath: path].cast()
+        }
+    }
 }
 
 public extension Optional where Wrapped == Any {
