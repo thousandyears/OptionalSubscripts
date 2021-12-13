@@ -2,6 +2,8 @@
 //  Created by Milos Rankovic on 12/12/2021.
 //
 
+import OptionalSubscripts
+
 final class OptionalAny™: Hopes {
 
     func test_subscript() throws {

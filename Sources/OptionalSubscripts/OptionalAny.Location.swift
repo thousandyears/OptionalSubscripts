@@ -12,44 +12,6 @@ public extension Optional where Wrapped == Any {
     }
 }
 
-extension Optional.Location: CodingKey where Wrapped == Any {
-
-    @inlinable public var stringValue: String { description }
-    @inlinable public init?(stringValue: String) { self = .key(stringValue) }
-
-    @inlinable public var intValue: Int? { index }
-    @inlinable public init?(intValue: Int) { self = .index(intValue) }
-}
-
-extension Optional.Location: ExpressibleByStringLiteral, ExpressibleByExtendedGraphemeClusterLiteral, ExpressibleByUnicodeScalarLiteral where Wrapped == Any {
-    
-    public init(stringLiteral value: String) {
-        self = .key(value)
-    }
-    
-    public init(extendedGraphemeClusterLiteral value: String) {
-        self = .key(value)
-    }
-    
-    public init(unicodeScalarLiteral value: String) {
-        self = .key(value)
-    }
-}
-
-extension Optional.Location: ExpressibleByIntegerLiteral where Wrapped == Any {
-    
-    public init(integerLiteral value: IntegerLiteralType) {
-        self = .index(value)
-    }
-}
-
-public extension Collection where Element == Optional<Any>.Location {
-
-    @inlinable func joined(separator: String = ".") -> String {
-        lazy.map(\.description).joined(separator: separator)
-    }
-}
-
 public extension Optional.Location where Wrapped == Any {
 
     @inlinable var key: String? {
@@ -64,6 +26,37 @@ public extension Optional.Location where Wrapped == Any {
         case .index(let o): return o
         case .key: return nil
         }
+    }
+}
+
+extension Optional.Location: CodingKey where Wrapped == Any {
+
+    @inlinable public var stringValue: String { description }
+    @inlinable public init?(stringValue: String) { self = .key(stringValue) }
+
+    @inlinable public var intValue: Int? { index }
+    @inlinable public init?(intValue: Int) { self = .index(intValue) }
+}
+
+extension Optional.Location: ExpressibleByStringLiteral, ExpressibleByExtendedGraphemeClusterLiteral, ExpressibleByUnicodeScalarLiteral where Wrapped == Any {
+    
+    @inlinable public init(stringLiteral value: String) {
+        self = .key(value)
+    }
+    
+    @inlinable public init(extendedGraphemeClusterLiteral value: String) {
+        self = .key(value)
+    }
+    
+    @inlinable public init(unicodeScalarLiteral value: String) {
+        self = .key(value)
+    }
+}
+
+extension Optional.Location: ExpressibleByIntegerLiteral where Wrapped == Any {
+    
+    @inlinable public init(integerLiteral value: IntegerLiteralType) {
+        self = .index(value)
     }
 }
 
@@ -91,7 +84,7 @@ extension Optional.Location: Hashable where Wrapped == Any {
 
 extension Optional.Location: CustomStringConvertible, CustomDebugStringConvertible where Wrapped == Any {
 
-    public var description: String {
+    @inlinable public var description: String {
         switch self {
         case let .key(o): return o
         case let .index(o): return String(describing: o)
@@ -100,6 +93,13 @@ extension Optional.Location: CustomStringConvertible, CustomDebugStringConvertib
 
     @inlinable public var debugDescription: String {
         description
+    }
+}
+
+public extension Sequence where Element == Optional<Any>.Location {
+
+    @inlinable func joined(separator: String = ".") -> String {
+        lazy.map(\.description).joined(separator: separator)
     }
 }
 

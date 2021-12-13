@@ -42,8 +42,8 @@ public extension WritableKeyPath where Root == Any?, Value == Any? {
          
          var o = \Any?.self
          
-         for fork in route {
-             switch fork {
+         for location in route {
+             switch location {
              case let .key(key): o = o.appending(path: \.[key])
              case let .index(index): o = o.appending(path: \.[index])
              }
@@ -77,20 +77,23 @@ extension Optional: Castable where Wrapped == Any {
         }
         return a
     }
+}
 
-    @inlinable public subscript<A>(route: Location..., as type: A.Type = A.self) -> A {
+public extension Optional where Wrapped == Any {
+
+    @inlinable subscript<A>(route: Location..., as type: A.Type = A.self) -> A {
         get throws {
             try self[route].cast()
         }
     }
 
-    public subscript<A, Route>(route: Route, as type: A.Type = A.self) -> A where Route: Collection, Route.Element == Location, Route.Index == Int {
+    @inlinable subscript<A, Route>(route: Route, as type: A.Type = A.self) -> A where Route: Collection, Route.Index == Int, Route.Element == Location {
         get throws {
             try self[keyPath: Any?.keyPath(route)].cast()
         }
     }
     
-    public subscript<A>(path: KeyPath, as type: A.Type = A.self) -> A {
+    @inlinable subscript<A>(path: KeyPath, as type: A.Type = A.self) -> A {
         get throws {
             try self[keyPath: path].cast()
         }
@@ -108,7 +111,7 @@ public extension Optional where Wrapped == Any {
         }
     }
 
-    subscript<Route>(route: Route) -> Any? where Route: Collection, Route.Element == Location, Route.Index == Int {
+    @inlinable subscript<Route>(route: Route) -> Any? where Route: Collection, Route.Element == Location, Route.Index == Int {
         get {
             self[keyPath: Any?.keyPath(route)]
         }
@@ -126,16 +129,7 @@ public extension Optional where Wrapped == Any {
         }
     }
     
-    @inlinable subscript() -> Any? {
-        get {
-            self
-        }
-        set {
-            self = newValue
-        }
-    }
-    
-    subscript(fork: Location) -> Any? {
+    @inlinable subscript(fork: Location) -> Any? {
         get {
             switch fork {
             case let .key(key): return self[key]
@@ -163,7 +157,7 @@ public extension Optional where Wrapped == Any {
     
     subscript(index: Int) -> Any? {
         get {
-            guard 0... ~= index, let o = self as? [Any?], o.indices.contains(index) else {
+            guard let o = self as? [Any?], o.indices ~= index else {
                 return nil
             }
             return o[index]
