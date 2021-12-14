@@ -7,10 +7,6 @@ public protocol Castable {
 }
 
 public extension Castable {
-    
-    @inlinable func cast(to: Self.Type = Self.self) throws -> Self {
-        self
-    }
 
     func cast<A>(to: A.Type = A.self) throws -> A {
         guard let a = self as? A else {
