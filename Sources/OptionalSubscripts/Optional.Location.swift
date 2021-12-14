@@ -72,6 +72,16 @@ extension Optional.Location: Comparable where Wrapped == Any {
     }
 }
 
+public extension Collection where Element == Optional<Any>.Location {
+    
+    static func < (lhs: Self, rhs: Self) -> Bool {
+        guard let (l, r) = zip(lhs, rhs).first(where: !=) else {
+            return lhs.count < rhs.count
+        }
+        return l < r
+    }
+}
+
 extension Optional.Location: Equatable where Wrapped == Any {
 
     @inlinable public static func == (lhs: Self, rhs: Self) -> Bool {
