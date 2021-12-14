@@ -180,3 +180,32 @@ public extension Optional where Wrapped == Any {
         }
     }
 }
+
+#if canImport(Foundation)
+import Foundation
+
+public extension Optional where Wrapped == Any {
+    
+    enum JSONSerializationError: Error {
+        case isNil
+        case notValidJSONObject(Any)
+    }
+    
+    func json(options: JSONSerialization.WritingOptions = [.fragmentsAllowed, .sortedKeys, .prettyPrinted]) throws -> Data {
+        guard let o = self else {
+            throw JSONSerializationError.isNil
+        }
+        guard JSONSerialization.isValidJSONObject(o) else {
+            throw JSONSerializationError.notValidJSONObject(o)
+        }
+        return try JSONSerialization.data(withJSONObject: o, options: options)
+    }
+}
+
+public extension Data {
+    
+    func string(encoding: String.Encoding = .utf8) -> String {
+        String(data: self, encoding: encoding) ?? ""
+    }
+}
+#endif
