@@ -1,10 +1,11 @@
 //
-//  Created by Milos Rankovic on 12/12/2021.
+// github.com/screensailor 2021
 //
 
-import OptionalSubscripts
+@_exported import Hope
+@_exported import OptionalSubscripts
 
-final class OptionalAny™: Hopes {
+final class Optional™: Hopes {
 
     func test_subscript() throws {
 
@@ -38,7 +39,7 @@ final class OptionalAny™: Hopes {
     }
 }
 
-extension OptionalAny™ {
+extension Optional™ {
     
     static let routes = Optional<Any>.RandomRoutes(
         keys: "abcde".map(String.init),

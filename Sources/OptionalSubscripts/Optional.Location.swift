@@ -1,5 +1,5 @@
 //
-//  Created by Milos Rankovic on 12/12/2021.
+// github.com/screensailor 2021
 //
 
 public extension Optional where Wrapped == Any {
