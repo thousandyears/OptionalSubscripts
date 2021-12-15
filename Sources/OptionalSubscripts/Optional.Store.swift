@@ -12,7 +12,7 @@ public extension Optional where Wrapped == Any {
         public var data: Any?
         
         public private(set) var transactionLevel: TransactionLevel = 0
-        public private(set) var transactionUpdates: [TransactionLevel: [(Route, Any?)]] = [:]
+        public private(set) var transactionUpdates: [TransactionLevel: BatchUpdates] = [:]
 
         typealias ID = UInt
         typealias Subject = [ID: AsyncStream<Any?>.Continuation]
@@ -61,21 +61,10 @@ public extension Optional.Store where Wrapped == Any {
 
 public extension Optional.Store where Wrapped == Any {
 
-    func batch(_ updates: BatchUpdates) {
-        var routes: Set<Route> = []
-        for (route, value) in updates {
-            data[route] = value
-            routes.formUnion(subscriptions.routes(affectedByChanging: route))
-        }
-        for route in routes.sorted(by: <) {
-            guard let subject: Subject = subscriptions[route] else {
-                continue
-            }
-            let value = data[route]
-            subject.values.forEach { $0.yield(value) }
-        }
+    var isInTransaction: Bool {
+        transactionLevel > 0
     }
-
+    
     func transaction(_ updates: (Optional<Any>.Store) async throws -> ()) async rethrows {
         transactionLevel += 1
         do {
@@ -92,6 +81,23 @@ public extension Optional.Store where Wrapped == Any {
             transactionUpdates.removeValue(forKey: transactionLevel)
             transactionLevel -= 1
             throw error
+        }
+    }
+
+    func batch(_ updates: BatchUpdates) {
+        var routes: Set<Route> = []
+        for (route, value) in updates {
+            data[route] = value
+            routes.formUnion(
+                subscriptions
+                    .routes(affectedByChanging: route)
+                    .filter{ subscriptions[$0] as Subject? != nil }
+            )
+        }
+        for route in routes.sorted(by: <) {
+            guard let subject: Subject = subscriptions[route] else { continue }
+            let value = data[route]
+            subject.values.forEach { $0.yield(value) }
         }
     }
 }

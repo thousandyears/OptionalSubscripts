@@ -4,7 +4,7 @@
 
 import Combine
 
-final class Store™: Hopes {
+final class OptionalStore™: Hopes {
     
     func test_stream() async throws {
         
@@ -93,7 +93,7 @@ final class Store™: Hopes {
     }
 }
 
-extension Store™ {
+extension OptionalStore™ {
     
     static let routes = Any?.RandomRoutes(
         keys: "abcde".map(String.init),
@@ -147,11 +147,11 @@ extension Store™ {
             keys: "abc".map(String.init),
             indices: Array(1...2),
             keyBias: 0.8,
-            length: 1...4,
+            length: 3...12,
             seed: 4
         )
 
-        let routes = g.generate(count: 1_000)
+        let routes = g.generate(count: 10_000)
 
         let o = Any?.Store()
         let o2 = Any?.Store()
@@ -193,7 +193,7 @@ extension Store™ {
 
             hope(copy) == original
             hope(count.o2) == 2  // initial nil, followed by the batch update
-            hope(count.o) == 113 // not batched
+            hope(count.o) == 678 // not batched
         }
     }
     
@@ -203,13 +203,10 @@ extension Store™ {
         
         let promise = expectation()
         var bag: Set<AnyCancellable> = []
-        var x: [Int?] = []
         
-        await o.publisher("x").filter(Int?.self).sink { o in
-            x.append(o)
-            if o == 3 {
-                promise.fulfill()
-            }
+        await o.publisher("x").filter(Int?.self).prefix{ $0 != 3 }.collect().sink { o in
+            hope(o) == [nil]
+            promise.fulfill()
         }.store(in: &bag)
 
         await o.transaction { store in
@@ -241,8 +238,6 @@ extension Store™ {
         try await hope(that: o[]) == ["x": 3, "y": 3]
         
         wait(for: promise, timeout: 1)
-        
-        hope(x) == [nil, 3]
     }
     
     func test_transaction_level() async throws {

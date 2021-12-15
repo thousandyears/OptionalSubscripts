@@ -25,6 +25,23 @@ public extension Optional.Store where Wrapped == Any {
     }
 }
 
+public extension Dictionary.Store {
+    
+    func publisher(_ key: Key) -> AnyPublisher<Value?, Never> {
+        let stream = self.stream(key)
+        let o = PassthroughSubject<Value?, Never>()
+        return o.handleEvents(receiveSubscription: { _ in
+            Task {
+                for await element in stream {
+                    try Task.checkCancellation()
+                    o.send(element)
+                }
+                o.send(completion: .finished)
+            }
+        }).eraseToAnyPublisher()
+    }
+}
+
 public extension Publisher {
     
     @inlinable func filter<A>(_: A.Type = A.self) -> Publishers.CompactMap<Self, A> {
