@@ -4,18 +4,13 @@
 
 import Combine
 
-public extension Optional.Store where Wrapped == Any {
-
-    @inlinable func publisher(_ route: Location...) -> AnyPublisher<Any?, Never> {
-        publisher(route)
-    }
+extension AsyncSequence {
     
-    func publisher<Route>(_ route: Route) -> AnyPublisher<Any?, Never> where Route: Collection, Route.Index == Int, Route.Element == Location {
-        let stream = self.stream(route)
-        let o = PassthroughSubject<Any?, Never>()
+    @usableFromInline func publisher() -> AnyPublisher<Element, Never> {
+        let o = PassthroughSubject<Element, Never>()
         return o.handleEvents(receiveSubscription: { _ in
             Task {
-                for await element in stream {
+                for try await element in self {
                     try Task.checkCancellation()
                     o.send(element)
                 }
@@ -25,20 +20,21 @@ public extension Optional.Store where Wrapped == Any {
     }
 }
 
+public extension Optional.Store where Wrapped == Any {
+
+    @inlinable func publisher(_ route: Location...) -> AnyPublisher<Any?, Never> {
+        stream(route).publisher()
+    }
+    
+    @inlinable func publisher<Route>(_ route: Route) -> AnyPublisher<Any?, Never> where Route: Collection, Route.Index == Int, Route.Element == Location {
+        stream(route).publisher()
+    }
+}
+
 public extension Dictionary.Store {
     
-    func publisher(_ key: Key) -> AnyPublisher<Value?, Never> {
-        let stream = self.stream(key)
-        let o = PassthroughSubject<Value?, Never>()
-        return o.handleEvents(receiveSubscription: { _ in
-            Task {
-                for await element in stream {
-                    try Task.checkCancellation()
-                    o.send(element)
-                }
-                o.send(completion: .finished)
-            }
-        }).eraseToAnyPublisher()
+    @inlinable func publisher(_ key: Key) -> AnyPublisher<Value?, Never> {
+        stream(key).publisher()
     }
 }
 
