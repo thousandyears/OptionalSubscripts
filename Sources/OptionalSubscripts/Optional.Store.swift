@@ -6,6 +6,7 @@ public extension Optional where Wrapped == Any {
     
     actor Store {
         
+        public typealias BatchUpdates = [(Route, Any?)]
         public typealias TransactionLevel = UInt
         
         public var data: Any?
@@ -60,9 +61,7 @@ public extension Optional.Store where Wrapped == Any {
 
 public extension Optional.Store where Wrapped == Any {
 
-    nonisolated var batch: [(Route, Any?)] { [] }
-
-    func batch(_ updates: [(Route, Any?)]) {
+    func batch(_ updates: BatchUpdates) {
         var routes: Set<Route> = []
         for (route, value) in updates {
             data[route] = value

@@ -171,7 +171,7 @@ extension Store™ {
             result = o
         }.store(in: &bag)
 
-        var updates = o.batch
+        var updates = Any?.Store.BatchUpdates()
 
         for route in routes {
             await o.set(route, to: "✅")
