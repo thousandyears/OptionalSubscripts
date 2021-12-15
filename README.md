@@ -33,3 +33,25 @@ try 📦[\.["one"][2]["three"]] == 4
 📦[] == nil
 
 ```
+
+Including an `Any?.Store` actor with routed streams, publishers, batch updates and atomic transactions:
+```swift
+let o = Any?.Store()
+
+let stream = await o.stream("me", 2, "you").filter(String.self).prefix(3)
+
+Task {
+    var hearts: [String] = []
+    
+    for await o in stream {
+        hearts.append(o)
+    }
+    
+    hearts == ["❤️", "💛", "💚"] // true
+}
+
+await o.set("me", 2, "you", to: "❤️")
+await o.set("me", 2, "you", to: "💛")
+await o.set("me", 2, "you", to: "💚")
+
+```
