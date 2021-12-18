@@ -25,9 +25,11 @@ public extension Dictionary {
 }
 
 public extension Dictionary.Store {
+    
+    typealias BufferingPolicy = AsyncStream<Value?>.Continuation.BufferingPolicy
 
-    func stream(_ key: Key) -> AsyncStream<Value?> {
-        AsyncStream { continuation in
+    func stream(_ key: Key, bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AsyncStream<Value?> {
+        AsyncStream(bufferingPolicy: bufferingPolicy) { continuation in
             self.insert(continuation, for: key)
         }
     }
@@ -83,7 +85,7 @@ public extension Dictionary.Store {
         var set: Set<Key> = []
         for (key, value) in updates {
             dictionary[key] = value
-            if !set.insert(key).inserted {
+            if set.insert(key).inserted {
                 array.append(key)
             }
         }

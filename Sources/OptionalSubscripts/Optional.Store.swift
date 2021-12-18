@@ -27,13 +27,15 @@ public extension Optional where Wrapped == Any {
 }
 
 public extension Optional.Store where Wrapped == Any {
+    
+    typealias BufferingPolicy = AsyncStream<Any?>.Continuation.BufferingPolicy
 
-    @inlinable func stream(_ route: Location...) -> AsyncStream<Any?> {
-        stream(route)
+    @inlinable func stream(_ route: Location..., bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AsyncStream<Any?> {
+        stream(route, bufferingPolicy: bufferingPolicy)
     }
 
-    func stream<Route>(_ route: Route) -> AsyncStream<Any?> where Route: Collection, Route.Index == Int, Route.Element == Location {
-        AsyncStream { continuation in
+    func stream<Route>(_ route: Route, bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AsyncStream<Any?> where Route: Collection, Route.Index == Int, Route.Element == Location {
+        AsyncStream(bufferingPolicy: bufferingPolicy) { continuation in
             self.insert(continuation, for: route)
         }
     }
@@ -44,6 +46,7 @@ public extension Optional.Store where Wrapped == Any {
         let id = self.count
         subscriptions[route, inserting: Subject()][id] = continuation
         continuation.onTermination = { @Sendable [weak self] termination in
+            print("✅ onTermination")
             guard let self = self else { return }
             Task {
                 await self.remove(continuation: id, for: route)
@@ -52,6 +55,7 @@ public extension Optional.Store where Wrapped == Any {
     }
 
     private func remove<Route>(continuation id: ID, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
+        print("✅ remove", route)
         subscriptions[route]?[id] = nil
         if subscriptions[route]?.isEmpty == true {
             subscriptions[route] = Subject?.none

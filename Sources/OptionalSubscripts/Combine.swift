@@ -8,33 +8,43 @@ extension AsyncSequence {
     
     @usableFromInline func publisher() -> AnyPublisher<Element, Never> {
         let o = PassthroughSubject<Element, Never>()
-        return o.handleEvents(receiveSubscription: { _ in
-            Task {
-                for try await element in self {
-                    try Task.checkCancellation()
-                    o.send(element)
+        var task: Task<(), Error>?
+        return o.handleEvents(
+            receiveCancel: {
+                if let o = task {
+                    o.cancel()
+                    task = nil
                 }
-                o.send(completion: .finished)
+            },
+            receiveRequest: { _ in
+                guard task == nil else {
+                    return
+                }
+                task = Task {
+                    for try await element in self {
+                        o.send(element)
+                    }
+                }
             }
-        }).eraseToAnyPublisher()
+        ).eraseToAnyPublisher()
     }
 }
 
 public extension Optional.Store where Wrapped == Any {
 
-    @inlinable func publisher(_ route: Location...) -> AnyPublisher<Any?, Never> {
-        stream(route).publisher()
+    @inlinable func publisher(for route: Location..., bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AnyPublisher<Any?, Never> {
+        stream(route, bufferingPolicy: bufferingPolicy).publisher()
     }
     
-    @inlinable func publisher<Route>(_ route: Route) -> AnyPublisher<Any?, Never> where Route: Collection, Route.Index == Int, Route.Element == Location {
-        stream(route).publisher()
+    @inlinable func publisher<Route>(for route: Route, bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AnyPublisher<Any?, Never> where Route: Collection, Route.Index == Int, Route.Element == Location {
+        stream(route, bufferingPolicy: bufferingPolicy).publisher()
     }
 }
 
 public extension Dictionary.Store {
-    
-    @inlinable func publisher(_ key: Key) -> AnyPublisher<Value?, Never> {
-        stream(key).publisher()
+
+    @inlinable func publisher(for key: Key, bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AnyPublisher<Value?, Never> {
+        stream(key, bufferingPolicy: bufferingPolicy).publisher()
     }
 }
 

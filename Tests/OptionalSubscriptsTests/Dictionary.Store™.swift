@@ -7,68 +7,85 @@ import Combine
 final class DictionaryStore™: Hopes {
     
     func test_stream() async throws {
-
-        let o = [String: String].Store()
-
-        let stream = await o.stream("heart").compactMap{ $0 }.prefix(3)
         
-        Task {
-            var hearts: [String] = []
-            
-            for await heart in stream {
-                hearts.append(heart)
+        let o = [String: String].Store(["heart": "?"])
+        
+    forloop:
+        for await heart in await o.stream("heart") {
+            switch heart
+            {
+            case "?":
+                await o.set("heart", to: "❤️")
+                
+            case "❤️":
+                await o.set("heart", to: "💛")
+                
+            case "💛":
+                await o.set("fart",  to: "😱")
+                await o.set("heart", to: "💚")
+                
+            case "💚":
+                break forloop
+                
+            default:
+                hope.less("Unexpected: '\(heart as Any)'")
+                break forloop
             }
-            
-            hope(hearts) == ["❤️", "💛", "💚"]
         }
-
         
-        await o.set("heart", to: "❤️")
-        await o.set("heart", to: "💛")
-        await o.set("heart", to: "💚")
-
-
-        await o.set("heart", to: nil)
-        await hope(that: o.dictionary.isEmpty) == true
+        await hope(that: o.dictionary) == [
+            "heart": "💚",
+            "fart": "😱"
+        ]
     }
     
     func test_publisher() async throws {
         
         let o = [String: String].Store()
-
         var bag: Set<AnyCancellable> = []
         let promise = expectation()
         
-        await o.publisher("heart").filter().prefix(3).collect().sink { (o: [String]) in
-            promise.fulfill()
-            hope(o) == ["❤️", "💛", "💚"]
+        await o.publisher(for: "heart").sink { heart in
+            Task {
+                switch heart
+                {
+                case nil:
+                    await o.set("heart", to: "❤️")
+                    
+                case "❤️":
+                    await o.set("heart", to: "💛")
+                    
+                case "💛":
+                    await o.set("fart",  to: "😱")
+                    await o.set("heart", to: "💚")
+                    
+                case "💚":
+                    promise.fulfill()
+                    
+                default:
+                    hope.less("Unexpected: '\(heart as Any)'")
+                }
+            }
         }.store(in: &bag)
         
-        await o.set("heart", to: "❤️")
-        await o.set("heart", to: "💛")
-        await o.set("fart", to: "😱")
-        await o.set("heart", to: "💚")
-
         wait(for: promise, timeout: 1)
         
-        await hope(that: o.dictionary) == ["heart": "💚", "fart": "😱"]
+        await hope(that: o.dictionary) == [
+            "heart": "💚",
+            "fart": "😱"
+        ]
     }
 
     func test_batch() async throws {
 
         let o = [String: Int].Store()
+        var bag: Set<AnyCancellable> = []
+        let promise = expectation()
         
-        let stream = await o.stream("x").prefix(2)
-        
-        Task {
-            var xs: [Int?] = []
-            
-            for await x in stream {
-                xs.append(x)
-            }
-
-            hope(xs) == [nil, 3]
-        }
+        await o.publisher(for: "x", bufferingPolicy: .unbounded).prefix(2).collect().sink { callbacks in
+            hope(callbacks) == [nil, 3]
+            promise.fulfill()
+        }.store(in: &bag)
         
         var batch = [String: Int].Store.BatchUpdates()
 
@@ -82,8 +99,13 @@ final class DictionaryStore™: Hopes {
         try hope(batch.get("x")) == 3
 
         await o.batch(batch)
+        
+        wait(for: promise, timeout: 1)
 
-        await hope(that: o.dictionary) == ["x": 3, "y": 3]
+        await hope(that: o.dictionary) == [
+            "x": 3,
+            "y": 3
+        ]
     }
 
     func test_transaction() async throws {
@@ -93,8 +115,8 @@ final class DictionaryStore™: Hopes {
         let promise = expectation()
         var bag: Set<AnyCancellable> = []
         
-        await o.publisher("x").prefix{ $0 != 3 }.collect().sink { o in
-            hope(o) == [nil]
+        await o.publisher(for: "x", bufferingPolicy: .unbounded).prefix(2).collect().sink { o in
+            hope(o) == [nil, 3]
             promise.fulfill()
         }.store(in: &bag)
 
@@ -124,9 +146,9 @@ final class DictionaryStore™: Hopes {
             }
         }
         
-        await hope(that: o.dictionary) == ["x": 3, "y": 3]
-        
         wait(for: promise, timeout: 1)
+        
+        await hope(that: o.dictionary) == ["x": 3, "y": 3]
     }
     
     func test_transaction_level() async throws {

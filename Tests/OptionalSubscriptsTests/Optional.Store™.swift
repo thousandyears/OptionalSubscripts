@@ -3,93 +3,98 @@
 //
 
 import Combine
+import SwiftUI
 
 final class OptionalStore™: Hopes {
+    
+    typealias Route = Optional<Any>.Route
     
     func test_stream() async throws {
         
         let o = Any?.Store()
-        let route: Optional<Any>.Route = ["a", "b", "c"]
+        let route = ["way", "to", "my", "heart"] as Route
         
-        let stream = await o.stream(route).filter(String.self).prefix(3)
-
-        Task {
-            var all: [String] = []
-            
-            for await o in stream {
-                all.append(o)
+        await o.set(route, to: "?")
+        
+    forloop:
+        for await heart in await o.stream(route) {
+            switch heart as? String {
+            case "?":  await o.set(route, to: "❤️")
+            case "❤️": await o.set(route, to: "💛")
+            case "💛": await o.set(route, to: "💚")
+            case "💚": break forloop
+            default:
+                hope.less("Unexpected: '\(heart as Any)'")
+                break forloop
             }
-            
-            hope(all) == ["❤️", "💛", "💚"]
         }
-        
-        await o.set(route, to: "❤️")
-        await o.set(route, to: "💛")
-        await o.set(route, to: "💚")
     }
     
     func test_publisher() async throws {
         
         let o = Any?.Store()
+        let route = ["way", "to", "my", "heart"] as Route
         
+        await o.set(route, to: "?")
+
         var bag: Set<AnyCancellable> = []
         let promise = expectation()
         
-        await o.publisher("a", "b", "c").filter().prefix(3).collect().sink { (o: [String]) in
-            promise.fulfill()
-            hope(o) == ["❤️", "💛", "💚"]
+        await o.publisher(for: route).filter(String?.self).sink { heart in
+            Task {
+                switch heart {
+                case "?":  await o.set(route, to: "❤️")
+                case "❤️": await o.set(route, to: "💛")
+                case "💛": await o.set(route, to: "💚")
+                case "💚": promise.fulfill()
+                default:
+                    hope.less("Unexpected: '\(heart as Any)'")
+                    promise.fulfill()
+                }
+            }
         }.store(in: &bag)
-        
-        await o.set("a", "b", "c", to: "❤️")
-        await o.set("a", "b", "c", to: "💛")
-        await o.set("a", "b", "x", to: "😱")
-        await o.set("a", "b", "c", to: "💚")
 
         wait(for: promise, timeout: 1)
-        
-        try await hope(that: o["a", "b"]) == ["c": "💚", "x": "😱"]
     }
     
     func test_update_upstream() async throws {
         
         let o = Any?.Store()
         
-        var bag: Set<AnyCancellable> = []
-        let promise = expectation()
+        await o.set("a", 2, "c", to: "?")
         
-        await o.publisher("a", 2, "c").filter(String.self).prefix(3).collect().sink { o in
-            promise.fulfill()
-            hope(o) == ["❤️", "💛", "💚"]
-        }.store(in: &bag)
-        
-        await o.set("a", 2, to: ["c": "❤️"])
-        await o.set("a", 2, to: ["c": "💛"])
-        await o.set("a", 2, to: ["c": "💚"])
-
-        wait(for: promise, timeout: 1)
+    forloop:
+        for await heart in await o.stream("a", 2, "c") {
+            switch heart as? String {
+            case "?":  await o.set("a", 2, to: ["c": "❤️"])
+            case "❤️": await o.set("a", 2, to: ["c": "💛"])
+            case "💛": await o.set("a", 2, to: ["c": "💚"])
+            case "💚": break forloop
+            default:
+                hope.less("Unexpected: '\(heart as Any)'")
+                break forloop
+            }
+        }
     }
     
     func test_update_downstream() async throws {
         
         let o = Any?.Store()
         
-        var bag: Set<AnyCancellable> = []
-        let promise = expectation()
+        await o.set("a", 2, "c", to: "?")
         
-        await o.publisher("a", 2).filter([String: String].self).prefix(3).collect().sink { o in
-            promise.fulfill()
-            hope(o) == [
-                ["c": "❤️"],
-                ["c": "💛"],
-                ["c": "💚"]
-            ]
-        }.store(in: &bag)
-        
-        await o.set("a", 2, "c", to: "❤️")
-        await o.set("a", 2, "c", to: "💛")
-        await o.set("a", 2, "c", to: "💚")
-
-        wait(for: promise, timeout: 1)
+    forloop:
+        for await heart in await o.stream("a", 2) {
+            switch heart as? [String: String] {
+            case ["c": "?"]:  await o.set("a", 2, "c", to: "❤️")
+            case ["c": "❤️"]: await o.set("a", 2, "c", to: "💛")
+            case ["c": "💛"]: await o.set("a", 2, "c", to: "💚")
+            case ["c": "💚"]: break forloop
+            default:
+                hope.less("Unexpected: '\(heart as Any)'")
+                break forloop
+            }
+        }
     }
 }
 
@@ -105,7 +110,7 @@ extension OptionalStore™ {
     
     func test_1000_subscriptions() async throws {
         
-        let routes = Self.routes.generate(count: 1_000)
+        let routes = Self.routes.generate(count: 3)
 
         let o = Any?.Store()
         let o2 = Any?.Store()
@@ -115,25 +120,27 @@ extension OptionalStore™ {
         var count = 0
         
         for route in routes {
-            await o.publisher(route).filter(String.self).handleEvents(receiveCancel: {
-                count += 1
-                if count == routes.count {
-                    promise.fulfill()
-                }
-            }).sink{ o in
-                Task {
-                    await o2.set(route, to: o)
-                }
-            }.store(in: &bag)
+            
+            await o.publisher(for: route, bufferingPolicy: .unbounded)
+                .filter(String.self)
+                .sink{ o in
+                    Task {
+                        await o2.set(route, to: o)
+                    }
+                    count += 1
+                    if count == routes.count {
+                        promise.fulfill()
+                    }
+                }.store(in: &bag)
         }
 
         for route in routes {
             await o.set(route, to: "✅")
         }
         
-        bag.removeAll()
-        
         wait(for: promise, timeout: 1)
+        
+        bag.removeAll()
         
         let original = try await o.data.json(options: .sortedKeys).string()
         let copy = try await o2.data.json(options: .sortedKeys).string()
@@ -143,30 +150,28 @@ extension OptionalStore™ {
     
     func test_batch() async throws {
         
-        let g = Any?.RandomRoutes(
+        let routes = Any?.RandomRoutes(
             keys: "abc".map(String.init),
             indices: Array(1...2),
             keyBias: 0.8,
             length: 3...12,
             seed: 4
-        )
-
-        let routes = g.generate(count: 10_000)
+        ).generate(count: 10_000)
 
         let o = Any?.Store()
         let o2 = Any?.Store()
         
-        let route: Optional<Any>.Route = ["b", "b"]
+        let route = ["b", "b"] as Optional<Any>.Route
         
         var bag: Set<AnyCancellable> = []
         var count = (o: 0, o2: 0)
         var result: Any?
         
-        await o.publisher(route).sink { o in
+        await o.publisher(for: route, bufferingPolicy: .unbounded).sink { o in
             count.o += 1
         }.store(in: &bag)
         
-        await o2.publisher(route).sink { o in
+        await o2.publisher(for: route, bufferingPolicy: .unbounded).sink { o in
             count.o2 += 1
             result = o
         }.store(in: &bag)
@@ -177,6 +182,8 @@ extension OptionalStore™ {
             await o.set(route, to: "✅")
             updates.append((route, "✅"))
         }
+        
+        await Task.yield()
         
         await o2.batch(updates)
         
@@ -204,8 +211,8 @@ extension OptionalStore™ {
         let promise = expectation()
         var bag: Set<AnyCancellable> = []
         
-        await o.publisher("x").filter(Int?.self).prefix{ $0 != 3 }.collect().sink { o in
-            hope(o) == [nil]
+        await o.publisher(for: "x", bufferingPolicy: .unbounded).filter(Int?.self).prefix(2).collect().sink { o in
+            hope(o) == [nil, 3]
             promise.fulfill()
         }.store(in: &bag)
 
