@@ -98,7 +98,7 @@ final class Pond™: Hopes {
             keyBias: 1,
             length: 4...9,
             seed: 7
-        ).generate(count: 10)
+        ).generate(count: 1_000)
 
         let versions = (1...3).map({ (number: $0, promise: expectation()) })
         
