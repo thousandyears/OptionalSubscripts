@@ -57,37 +57,6 @@ final class OptionalStore™: Hopes {
         wait(for: promise, timeout: 1)
     }
     
-    func test_() async throws {
-
-        let o = Any?.Store()
-
-        await o.set("v/1.0/way/to", to: [
-            "red": ["heart": "❤️"],
-            "blue": ["heart": "💙"]
-        ])
-
-        let red = expectation()
-        let blue = expectation()
-        
-        Task {
-            for await heart in await o.stream("v/1.0/way/to", "red", "heart").filter(String?.self) { print("✅", heart as Any)
-                hope(heart) == "❤️"
-                red.fulfill()
-                break
-            }
-        }
-        
-        Task {
-            for await heart in await o.stream("v/1.0/way/to", "blue", "heart").filter(String?.self) { print("✅", heart as Any)
-                hope(heart) == "💙"
-                blue.fulfill()
-                break
-            }
-        }
-
-        wait(for: red, blue, timeout: 1)
-    }
-    
     func test_update_upstream() async throws {
         
         let o = Any?.Store()
@@ -131,17 +100,15 @@ final class OptionalStore™: Hopes {
 
 extension OptionalStore™ {
     
-    static let routes = Any?.RandomRoutes(
-        keys: "abcde".map(String.init),
-        indices: Array(1...3),
-        keyBias: 0.8,
-        length: 5...20,
-        seed: 4
-    )
-    
     func test_1000_subscriptions() async throws {
         
-        let routes = Self.routes.generate(count: 3)
+        let routes = Any?.RandomRoutes(
+            keys: "abcde".map(String.init),
+            indices: Array(1...3),
+            keyBias: 0.8,
+            length: 5...20,
+            seed: 4
+        ).generate(count: 3)
 
         let o = Any?.Store()
         let o2 = Any?.Store()
@@ -173,10 +140,57 @@ extension OptionalStore™ {
         
         bag.removeAll()
         
-        let original = try await o.data.json(options: .sortedKeys).string()
-        let copy = try await o2.data.json(options: .sortedKeys).string()
+        let original = try await o.data.json(options: .sortedKeys)
+        let copy = try await o2.data.json(options: .sortedKeys)
         
         hope(copy) == original
+    }
+    
+    func test_thread_safety() async throws {
+        
+        let ƒ: (String) -> [Optional<Any>.Route] = { alphabet in
+            Any?.RandomRoutes(
+                keys: alphabet.map(String.init),
+                indices: [],
+                keyBias: 1,
+                length: 2...7,
+                seed: 7
+            ).generate(count: 1_000)
+        }
+        
+        let high = ƒ("AB")
+        let low = ƒ("ab")
+
+        let o = Any?.Store()
+        var results: [Data] = []
+        
+        for _ in 1...10 {
+            
+            let promise = (
+                high: expectation(),
+                low: expectation()
+            )
+            
+            Task.detached {
+                for route in high {
+                    await o.set(route, to: "✅")
+                }
+                promise.high.fulfill()
+            }
+            
+            Task.detached {
+                for route in low {
+                    await o.set(route, to: "✅")
+                }
+                promise.low.fulfill()
+            }
+            
+            wait(for: promise.high, promise.low, timeout: 1)
+            
+            try await results.append(o.data.json())
+        }
+        
+        hope.true(results.dropFirst().allSatisfy{ $0 == results.first! })
     }
     
     func test_batch() async throws {
@@ -219,15 +233,15 @@ extension OptionalStore™ {
         await o2.batch(updates)
         
         do {
-            let original = try await o.data.json(options: .sortedKeys).string()
-            let copy = try await o2.data.json(options: .sortedKeys).string()
+            let original = try await o.data.json(options: .sortedKeys)
+            let copy = try await o2.data.json(options: .sortedKeys)
             
             hope(copy) == original
         }
         
         do {
-            let original = try await o.data[route].json(options: .sortedKeys).string()
-            let copy = try result.json(options: .sortedKeys).string()
+            let original = try await o.data[route].json(options: .sortedKeys)
+            let copy = try result.json(options: .sortedKeys)
 
             hope(copy) == original
             hope(count.o2) == 2  // initial nil, followed by the batch update
