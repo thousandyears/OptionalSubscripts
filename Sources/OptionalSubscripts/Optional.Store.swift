@@ -46,7 +46,6 @@ public extension Optional.Store where Wrapped == Any {
         let id = self.count
         subscriptions[route, inserting: Subject()][id] = continuation
         continuation.onTermination = { @Sendable [weak self] termination in
-            print("✅ onTermination")
             guard let self = self else { return }
             Task {
                 await self.remove(continuation: id, for: route)
@@ -55,7 +54,6 @@ public extension Optional.Store where Wrapped == Any {
     }
 
     private func remove<Route>(continuation id: ID, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
-        print("✅ remove", route)
         subscriptions[route]?[id] = nil
         if subscriptions[route]?.isEmpty == true {
             subscriptions[route] = Subject?.none

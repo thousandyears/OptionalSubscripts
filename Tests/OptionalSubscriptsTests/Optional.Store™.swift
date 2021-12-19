@@ -57,6 +57,37 @@ final class OptionalStore™: Hopes {
         wait(for: promise, timeout: 1)
     }
     
+    func test_() async throws {
+
+        let o = Any?.Store()
+
+        await o.set("v/1.0/way/to", to: [
+            "red": ["heart": "❤️"],
+            "blue": ["heart": "💙"]
+        ])
+
+        let red = expectation()
+        let blue = expectation()
+        
+        Task {
+            for await heart in await o.stream("v/1.0/way/to", "red", "heart").filter(String?.self) { print("✅", heart as Any)
+                hope(heart) == "❤️"
+                red.fulfill()
+                break
+            }
+        }
+        
+        Task {
+            for await heart in await o.stream("v/1.0/way/to", "blue", "heart").filter(String?.self) { print("✅", heart as Any)
+                hope(heart) == "💙"
+                blue.fulfill()
+                break
+            }
+        }
+
+        wait(for: red, blue, timeout: 1)
+    }
+    
     func test_update_upstream() async throws {
         
         let o = Any?.Store()
