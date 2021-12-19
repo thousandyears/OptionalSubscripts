@@ -30,6 +30,18 @@ extension AsyncSequence {
     }
 }
 
+
+public extension Optional.Pond where Wrapped == Any {
+
+    @inlinable func publisher(for route: Location..., bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AnyPublisher<Any?, Never> {
+        stream(route, bufferingPolicy: bufferingPolicy).publisher()
+    }
+    
+    @inlinable func publisher<Route>(for route: Route, bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AnyPublisher<Any?, Never> where Route: Collection, Route.Index == Int, Route.Element == Location {
+        stream(route, bufferingPolicy: bufferingPolicy).publisher()
+    }
+}
+
 public extension Optional.Store where Wrapped == Any {
 
     @inlinable func publisher(for route: Location..., bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AnyPublisher<Any?, Never> {
