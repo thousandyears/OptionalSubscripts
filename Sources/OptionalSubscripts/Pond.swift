@@ -87,7 +87,10 @@ private extension Optional.Pond where Wrapped == Any {
             switch sourceIDs[src.route] {
                 
             case let id? where id == src.id:
-                guard let gushSource = gushSources[src.id] else { assertionFailure("Missing subscription \(src.id)"); return }
+                guard let gushSource = gushSources[src.id] else {
+                    assertionFailure("Missing gush source \(src.id)")
+                    return
+                }
                 if gushSource.pendingContinuations == nil {
                     yield(route, to: continuation, limit: limit, with: src.id)
                 } else {
@@ -96,15 +99,18 @@ private extension Optional.Pond where Wrapped == Any {
                     )
                 }
                 
-            case let id?:
-                cancel(task: id) // expects geyser to be consistent
+            case let id?: // where id != src.id:
+                cancel(task: id) // TODO: route counting?
                 fallthrough
                 
             default:
                 let task = Task {
                     for try await gush in await source.stream(src.id) {
                         await store.set(src.route, to: gush)
-                        guard let gushSource = gushSources[src.id] else { assertionFailure("Missing subscription \(src.id)"); return }
+                        guard let gushSource = gushSources[src.id] else {
+                            assertionFailure("Missing gush source \(src.id)")
+                            return
+                        }
                         if let pending = gushSource.pendingContinuations {
                             gushSource.pendingContinuations = nil
                             for o in pending {
