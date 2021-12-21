@@ -155,11 +155,11 @@ public extension Optional where Wrapped == Any {
         case notValidJSONObject(Any)
     }
     
-    func json(options: JSONSerialization.WritingOptions = [.fragmentsAllowed, .sortedKeys, .prettyPrinted]) throws -> Data {
+    func json(_ options: JSONSerialization.WritingOptions = [.fragmentsAllowed, .sortedKeys, .prettyPrinted]) throws -> Data {
         guard let o = self else {
             throw JSONSerializationError.isNil
         }
-        guard JSONSerialization.isValidJSONObject(o) else {
+        guard JSONSerialization.isValidJSONObject([o]) else {
             throw JSONSerializationError.notValidJSONObject(o)
         }
         return try JSONSerialization.data(withJSONObject: o, options: options)
@@ -168,7 +168,7 @@ public extension Optional where Wrapped == Any {
 
 public extension Data {
     
-    func string(encoding: String.Encoding = .utf8) -> String {
+    func string(_ encoding: String.Encoding = .utf8) -> String {
         String(data: self, encoding: encoding) ?? ""
     }
 }

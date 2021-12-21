@@ -2,7 +2,7 @@
 // github.com/screensailor 2021
 //
 
-import Dispatch
+import Dispatch // TODO: #if canImport
 
 public extension Optional where Wrapped == Any {
     

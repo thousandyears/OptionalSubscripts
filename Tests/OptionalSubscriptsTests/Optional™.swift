@@ -128,4 +128,45 @@ extension Optional™ {
         
         try hope(p.as()) == "✅"
     }
+    
+    func test_json() throws {
+        
+        var o: Any?
+        hope.throws(try o.json())
+        
+        o = NSNull()
+        try hope(o.json().string()) == "null"
+        
+        o = true
+        try hope(o.json().string()) == "true"
+
+        o = 5
+        try hope(o.json().string()) == "5"
+        
+        o = 5.5
+        try hope(o.json().string()) == "5.5"
+
+        o = "5"
+        try hope(o.json().string()) == #""5""#
+
+        o = [1, 2, 3]
+        try hope(o.json().string()) == """
+        [
+          1,
+          2,
+          3
+        ]
+        """
+
+        o = ["one": 1, "two": 2]
+        try hope(o.json().string()) == """
+        {
+          "one" : 1,
+          "two" : 2
+        }
+        """
+        
+        o = { print("Not a valid JSON object") }
+        hope.throws(try o.json())
+    }
 }

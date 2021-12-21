@@ -47,11 +47,16 @@ Task {
         hearts.append(o)
     }
     
-    hearts == ["❤️", "💛", "💚"] // true
+    hearts == ["❤️", "💛", "💚"]
 }
 
 await o.set("me", 2, "you", to: "❤️")
-await o.set("me", 2, "you", to: "💛")
-await o.set("me", 2, "you", to: "💚")
+await o.set("me", 2, to: ["you": "💛"])
+await o.set("me", to: [nil, nil, ["you": "💚"]])
+
+```
+
+```swift 
+
 
 ```

@@ -2,6 +2,7 @@
 // github.com/screensailor 2021
 //
 
+#if canImport(Combine)
 import Combine
 
 extension AsyncSequence {
@@ -75,3 +76,4 @@ public extension Publisher {
         }
     }
 }
+#endif

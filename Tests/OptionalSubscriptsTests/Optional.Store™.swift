@@ -108,7 +108,7 @@ extension OptionalStore™ {
             keyBias: 0.8,
             length: 5...20,
             seed: 4
-        ).generate(count: 3)
+        ).generate(count: 1_000)
 
         let o = Any?.Store()
         let o2 = Any?.Store()
@@ -140,8 +140,8 @@ extension OptionalStore™ {
         
         bag.removeAll()
         
-        let original = try await o.data.json(options: .sortedKeys)
-        let copy = try await o2.data.json(options: .sortedKeys)
+        let original = try await o.data.json(.sortedKeys)
+        let copy = try await o2.data.json(.sortedKeys)
         
         hope(copy) == original
     }
@@ -233,15 +233,15 @@ extension OptionalStore™ {
         await o2.batch(updates)
         
         do {
-            let original = try await o.data.json(options: .sortedKeys)
-            let copy = try await o2.data.json(options: .sortedKeys)
+            let original = try await o.data.json(.sortedKeys)
+            let copy = try await o2.data.json(.sortedKeys)
             
             hope(copy) == original
         }
         
         do {
-            let original = try await o.data[route].json(options: .sortedKeys)
-            let copy = try result.json(options: .sortedKeys)
+            let original = try await o.data[route].json(.sortedKeys)
+            let copy = try result.json(.sortedKeys)
 
             hope(copy) == original
             hope(count.o2) == 2  // initial nil, followed by the batch update
@@ -256,30 +256,30 @@ extension OptionalStore™ {
         let promise = expectation()
         var bag: Set<AnyCancellable> = []
         
-        await o.publisher(for: "x", bufferingPolicy: .unbounded).filter(Int?.self).prefix(2).collect().sink { o in
+        await o.publisher(for: "x").filter(Int?.self).prefix(2).collect().sink { o in
             hope(o) == [nil, 3]
             promise.fulfill()
         }.store(in: &bag)
 
-        await o.transaction { store in
+        await o.transaction { o in
             
             await o.set("x", to: 1)
             await o.set("y", to: 1)
 
-            await o.transaction { store in
+            await o.transaction { o in
                 
                 await o.set("x", to: 2)
                 await o.set("y", to: 2)
 
                 do {
-                    try await o.transaction { store in
+                    try await o.transaction { o in
                         
                         await o.set("z", to: 3)
                         throw Any?.Store.Error.nilAt(route: ["x"])
                     }
                 } catch {}
                 
-                await o.transaction { store in
+                await o.transaction { o in
                     
                     await o.set("x", to: 3)
                     await o.set("y", to: 3)
@@ -296,16 +296,16 @@ extension OptionalStore™ {
         
         let o = Any?.Store()
         
-        await o.transaction { store in
+        await o.transaction { o in
             
             await hope(that: o.transactionLevel) == 1
 
-            await o.transaction { store in
+            await o.transaction { o in
 
                 await hope(that: o.transactionLevel) == 2
 
                 do {
-                    try await o.transaction { store in
+                    try await o.transaction { o in
                         
                         await hope(that: o.transactionLevel) == 3
                         
@@ -313,7 +313,7 @@ extension OptionalStore™ {
                     }
                 } catch {}
                 
-                await o.transaction { store in
+                await o.transaction { o in
                     
                     await hope(that: o.transactionLevel) == 3
                 }
