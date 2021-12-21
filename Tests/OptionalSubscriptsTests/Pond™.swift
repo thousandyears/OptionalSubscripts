@@ -19,21 +19,19 @@ final class Pond™: Hopes {
         
         var hearts = ""
         
-    forloop:
+        loop:
         for await heart in pond.stream("way", "to", "my", "heart").filter(String?.self) {
+            
             hearts += heart ?? ""
-            switch heart
-            {
-            case nil where hearts.isEmpty:
+            
+            switch heart {
+            case nil   where hearts.isEmpty:
                        await db.store.set("v/1.0/way/to", "my", "heart", to: "❤️")
             case "❤️": await db.store.set("v/1.0/way/to", "my", "heart", to: "💛")
             case "💛": await db.store.set("v/1.0/way/to", "my", "heart", to: "💚")
             case "💚": await db.setVersion(to: "v/2.0/")
-            case "🤍": await db.store.set("v/1.0/way/to", "my", "heart", to: "😱")
-                break forloop
-
-            default:
-                hope.less("Unexpected: \(heart as Any)")
+            case "🤍": break loop
+            default:   hope.less("Unexpected: \(heart as Any)")
             }
         }
 
