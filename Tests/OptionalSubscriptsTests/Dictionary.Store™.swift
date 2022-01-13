@@ -33,10 +33,10 @@ final class DictionaryStore™: Hopes {
             }
         }
         
-        await hope(that: o.dictionary) == [
-            "heart": "💚",
-            "fart": "😱"
-        ]
+		try await hope(that: o.get("heart")) == "💚"
+		try await hope(that: o.get("fart")) == "😱"
+
+		await hope(that: o.dictionary.count) == 2
     }
     
     func test_publisher() async throws {

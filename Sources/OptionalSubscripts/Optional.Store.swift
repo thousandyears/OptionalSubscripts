@@ -39,8 +39,11 @@ public extension Optional.Store where Wrapped == Any {
             self.insert(continuation, for: route)
         }
     }
+}
 
-    private func insert<Route>(_ continuation: AsyncStream<Any?>.Continuation, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
+private extension Optional.Store where Wrapped == Any {
+	
+    func insert<Route>(_ continuation: AsyncStream<Any?>.Continuation, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
         continuation.yield(data[route])
         self.count += 1
         let id = self.count
@@ -53,7 +56,7 @@ public extension Optional.Store where Wrapped == Any {
         }
     }
 
-    private func remove<Route>(continuation id: ID, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
+    func remove<Route>(continuation id: ID, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
         subscriptions[route]?[id] = nil
         if subscriptions[route]?.isEmpty == true {
             subscriptions[route] = Subject?.none

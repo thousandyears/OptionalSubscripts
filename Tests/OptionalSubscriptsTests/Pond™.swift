@@ -86,72 +86,78 @@ final class Pond™: Hopes {
     }
     
     func test_live_mapping_update() async throws {
-        
-        let db = Database()
-        let pond = Any?.Pond(source: db)
-        
-        let routes = Any?.RandomRoutes(
-            keys: ["a", "b", "c"],
-            indices: [],
-            keyBias: 1,
-            length: 4...9,
-            seed: 7
-        ).generate(count: 1_000)
+		
+		let db = Database()
+		let pond = Any?.Pond(source: db)
+		
+		let routes = Any?.RandomRoutes(
+			keys: ["a", "b", "c"],
+			indices: [],
+			keyBias: 1,
+			length: 4...9,
+			seed: 7
+		).generate(count: 1_000)
+		
+		actor Result {
+			
+			var values: [Optional<Any>.Route: String] = [:]
+			
+			func set(_ route: Optional<Any>.Route, to value: String?) {
+				values[route] = value
+			}
+		}
+		
+		let result = Result()
+		
+		for route in routes {
+			Task.detached {
+				for await value in pond.stream(route) {
+					await result.set(route, to: value as? String)
+				}
+			}
+		}
 
-        let versions = (1...3).map({ (number: $0, promise: expectation()) })
-        
-        actor Result {
-            
-            var values: [Optional<Any>.Route: String] = [:]
-            
-            func set(_ route: Optional<Any>.Route, to value: String?) {
-                values[route] = value
-            }
-        }
-        
-        let result = Result()
-        
-        for route in routes {
-            Task.detached {
-                for await value in pond.stream(route) {
-                    await result.set(route, to: value as? String)
-                }
-            }
-        }
+		let promise = [expectation(), expectation()]
+		let done: Optional<Any>.Route = ["well", "done", "okey", "dokey"]
 
-        for (version, promise) in versions {
-            Task.detached {
-                for route in routes {
-                    let route = [.key("v/\(version).0/\(route.prefix(2).joined(separator: "/"))")] + route.dropFirst(2)
-                    await db.store.set(route, to: "✅ v\(version)")
-                }
-                try await Task.sleep(seconds: 0.1) // TODO: remove
-                promise.fulfill()
-            }
-        }
-        
-        wait(for: versions.map(\.promise), timeout: 1)
+		Task.detached {
+			for await i in pond.stream(done).filter(Int.self) {
+				promise[i].fulfill()
+			}
+		}
 
-        for route in routes {
-            let v1 = [.key("v/1.0/\(route.prefix(2).joined(separator: "/"))")] + route.dropFirst(2)
-            let v3 = [.key("v/3.0/\(route.prefix(2).joined(separator: "/"))")] + route.dropFirst(2)
-            let l = await db.store.data[v1] as? String == "✅ v1"
-            let r = await db.store.data[v3] as? String == "✅ v3"
-            hope(l) == r
-        }
-        
-        let v1 = await result.values
-        hope.true(v1.map(\.value).allSatisfy{ $0 == "✅ v1" })
-        
-        await db.setVersion(to: "v/3.0/")
-        
-        try await Task.sleep(seconds: 0.1) // TODO: remove
-        
-        let v3 = await result.values
-        hope.true(v3.map(\.value).allSatisfy{ $0 == "✅ v3" })
-        
-        hope(v1.keys) == v3.keys
-    }
+		Task.detached {
+			for version in 1...3 {
+				for route in routes {
+					let route = db.route(for: route, version: version)
+					await db.store.set(route, to: "✅ v\(version)")
+				}
+			}
+			await db.store.set(db.route(for: done, version: 1), to: 0)
+			await db.store.set(db.route(for: done, version: 3), to: 1)
+		}
+
+		wait(for: promise[0], timeout: 10)
+
+		for route in routes {
+			let v1 = db.route(for: route, version: 1)
+			let v3 = db.route(for: route, version: 3)
+			let l = await db.store.data[v1] as? String == "✅ v1"
+			let r = await db.store.data[v3] as? String == "✅ v3"
+			hope(l) == r
+		}
+
+		let v1 = await result.values
+		hope.true(v1.map(\.value).allSatisfy{ $0 == "✅ v1" })
+
+		await db.setVersion(to: "v/3.0/")
+		wait(for: promise[1], timeout: 10)
+		
+		let v3 = await result.values
+		hope.true(v3.map(\.value).allSatisfy{ $0 == "✅ v3" })
+		
+		hope(v1.keys) == v3.keys
+	}
 }
 
 extension Pond™ {
@@ -166,6 +172,11 @@ extension Pond™ {
         var gushRouteCount = 2
         
         var store = Any?.Store()
+		
+		nonisolated func route(for route: Route, version: Int) -> Route {
+			let key = "v/\(version).0/\(route.prefix(2).joined(separator: "/"))"
+			return [.key(key)] + route.dropFirst(2)
+		}
         
         func setVersion(to version: String) {
             self.version = version
