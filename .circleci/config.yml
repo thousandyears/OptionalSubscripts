@@ -1,0 +1,12 @@
+jobs:
+  build-and-test:
+    macos:
+      xcode: 13.2.1
+    steps:
+      ...
+      - run:
+          name: Run tests
+          command: fastlane scan
+          environment:
+            SCAN_DEVICE: iPhone 13
+            SCAN_SCHEME: OptionalSubscripts
