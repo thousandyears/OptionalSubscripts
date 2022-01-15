@@ -3,7 +3,6 @@ jobs:
     macos:
       xcode: 13.2.1
     steps:
-      ...
       - run:
           name: Run tests
           command: fastlane scan
