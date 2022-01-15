@@ -2,9 +2,6 @@
 // github.com/screensailor 2021
 //
 
-@_exported import Hope
-@_exported import OptionalSubscripts
-
 final class Optional™: Hopes {
 
     func test_subscript() throws {

@@ -13,7 +13,7 @@ public extension Optional where Wrapped == Any {
         
         public private(set) var transactionLevel: TransactionLevel = 0
         public private(set) var transactionUpdates: [TransactionLevel: BatchUpdates] = [:]
-
+        
         typealias ID = UInt
         typealias Subject = [ID: AsyncStream<Any?>.Continuation]
         
@@ -29,11 +29,11 @@ public extension Optional where Wrapped == Any {
 public extension Optional.Store where Wrapped == Any {
     
     typealias BufferingPolicy = AsyncStream<Any?>.Continuation.BufferingPolicy
-
+    
     @inlinable func stream(_ route: Location..., bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AsyncStream<Any?> {
         stream(route, bufferingPolicy: bufferingPolicy)
     }
-
+    
     func stream<Route>(_ route: Route, bufferingPolicy: BufferingPolicy = .bufferingNewest(1)) -> AsyncStream<Any?> where Route: Collection, Route.Index == Int, Route.Element == Location {
         AsyncStream(bufferingPolicy: bufferingPolicy) { continuation in
             self.insert(continuation, for: route)
@@ -42,11 +42,11 @@ public extension Optional.Store where Wrapped == Any {
 }
 
 private extension Optional.Store where Wrapped == Any {
-	
+    
     func insert<Route>(_ continuation: AsyncStream<Any?>.Continuation, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
         continuation.yield(data[route])
-        self.count += 1
-        let id = self.count
+        let id = count + 1
+        count = id
         subscriptions[route, inserting: Subject()][id] = continuation
         continuation.onTermination = { @Sendable [weak self] termination in
             guard let self = self else { return }
@@ -55,7 +55,7 @@ private extension Optional.Store where Wrapped == Any {
             }
         }
     }
-
+    
     func remove<Route>(continuation id: ID, for route: Route) where Route: Collection, Route.Index == Int, Route.Element == Location {
         subscriptions[route]?[id] = nil
         if subscriptions[route]?.isEmpty == true {
@@ -65,7 +65,7 @@ private extension Optional.Store where Wrapped == Any {
 }
 
 public extension Optional.Store where Wrapped == Any {
-
+    
     var isInTransaction: Bool {
         transactionLevel > 0
     }
@@ -88,7 +88,7 @@ public extension Optional.Store where Wrapped == Any {
             throw error
         }
     }
-
+    
     func batch(_ updates: BatchUpdates) {
         var routes: Set<Route> = []
         for (route, value) in updates {
@@ -96,7 +96,7 @@ public extension Optional.Store where Wrapped == Any {
             routes.formUnion(
                 subscriptions
                     .routes(affectedByChanging: route)
-                    .filter{ subscriptions[$0] as Subject? != nil }
+                    .filter{ subscriptions[$0]?.value != nil }
             )
         }
         for route in routes.sorted(by: <) {
@@ -108,7 +108,7 @@ public extension Optional.Store where Wrapped == Any {
 }
 
 public extension Optional.Store where Wrapped == Any {
-
+    
     @inlinable func set(_ route: Location..., to value: Any?) {
         set(route, to: value)
     }
@@ -159,11 +159,11 @@ public extension Optional.Store where Wrapped == Any {
             try get(route)
         }
     }
-
+    
     @inlinable func get<A>(_ route: Location..., as type: A.Type = A.self) throws -> A {
         try get(route)
     }
-
+    
     func get<A, Route>(_ route: Route, as a: A.Type = A.self) throws -> A where Route: Collection, Route.Index == Int, Route.Element == Location {
         guard let any = data[route] else {
             throw Error.nilAt(route: Array(route))

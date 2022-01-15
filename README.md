@@ -34,7 +34,7 @@ try 📦[\.["one"][2]["three"]] == 4
 
 ```
 
-... including an `Any?.Store` actor with routed streams, publishers, batch updates and atomic transactions:
+The package includes `Any?.Store` actor with routed streams, publishers, batch updates and atomic transactions:
 ```swift
 let o = Any?.Store()
 
@@ -56,10 +56,10 @@ await o.set("me", to: [nil, nil, ["you": "💚"]])
 
 ```
 
-... and `Any?.Pond` actor that turns a chunky data source (like a document-oriented database) into routed data streams of arbitrary granularity:
+There is also `Any?.Pond` actor that turns a chunky data source (like a document-oriented database) into routed data streams of arbitrary granularity:
 
 ```swift 
-let db = SomeDatabase() // conforms to Geyser protocol
+let db = SomeDatabase() // conforms to Geyser protocol and streams entire documents
 let pond = Any?.Pond(source: db)
 
 await db.store.set("v/2.0/way/to", "my", "heart", to: "🤍")
@@ -67,8 +67,9 @@ await db.store.set("v/2.0/way/to", "my", "heart", to: "🤍")
 var hearts = ""
 
 loop:
-for await heart in pond.stream("way", "to", "my", "heart").filter(String?.self) {
-
+for await heart in pond.stream("way", "to", "my", "heart").filter(String?.self) {  
+    // observing a nested field in a versioned document ↑
+    
     hearts += heart ?? ""
     
     switch heart {
@@ -104,3 +105,7 @@ protocol Geyser {
     func source<Route>(of route: Route) async -> GushToRouteMapping where Route: Collection, Route.Index == Int, Route.Element == Optional<Any>.Location
 }
 ```
+
+And a bunch of other (hopefully) useful new API.
+
+(Decent documentation and an overall statement of purpose is forthcoming 😜)

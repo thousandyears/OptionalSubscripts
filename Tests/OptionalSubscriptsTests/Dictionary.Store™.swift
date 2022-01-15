@@ -68,7 +68,7 @@ final class DictionaryStore™: Hopes {
             }
         }.store(in: &bag)
         
-        wait(for: promise, timeout: 1)
+		await waitForExpectations(timeout: 1)
         
         await hope(that: o.dictionary) == [
             "heart": "💚",
@@ -100,8 +100,8 @@ final class DictionaryStore™: Hopes {
 
         await o.batch(batch)
         
-        wait(for: promise, timeout: 1)
-
+		await waitForExpectations(timeout: 1)
+		
         await hope(that: o.dictionary) == [
             "x": 3,
             "y": 3
@@ -146,8 +146,8 @@ final class DictionaryStore™: Hopes {
             }
         }
         
-        wait(for: promise, timeout: 1)
-        
+		await waitForExpectations(timeout: 1)
+		
         await hope(that: o.dictionary) == ["x": 3, "y": 3]
     }
     

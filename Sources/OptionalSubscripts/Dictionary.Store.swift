@@ -36,8 +36,8 @@ public extension Dictionary.Store {
 
     private func insert(_ continuation: AsyncStream<Value?>.Continuation, for key: Key) {
         continuation.yield(dictionary[key])
-        self.count += 1
-        let id = self.count
+        count += 1
+        let id = count
         subscriptions[key, default: [:]][id] = continuation
         continuation.onTermination = { @Sendable [weak self] termination in
             guard let self = self else { return }

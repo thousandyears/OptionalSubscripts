@@ -70,7 +70,7 @@ final class Pond™: Hopes {
             }
         }
 
-        wait(for: promise.red, promise.blue, timeout: 1)
+		await waitForExpectations(timeout: 1)
         
         await hope(that: pond.gushSources["v/1.0/way/to"]?.referenceCount) == 2
         
@@ -89,26 +89,46 @@ final class Pond™: Hopes {
 		
 		let db = Database()
 		let pond = Any?.Pond(source: db)
+		var bag: Set<AnyCancellable> = []
 		
-		let routes = Any?.RandomRoutes(
+		let rnd = Any?.RandomRoutes(
 			keys: ["a", "b", "c"],
 			indices: [],
 			keyBias: 1,
 			length: 4...9,
 			seed: 7
-		).generate(count: 1_000)
+        )
+        
+        let routes = Array(Set(rnd.generate(count: 1_000)))
 		
-		actor Result {
+		for version in 1...3 {
+			for route in routes {
+				let route = db.route(for: route, version: version)
+				await db.store.set(route, to: "✅ v\(version)")
+			}
+		}
+
+        actor Result {
 			
-			var values: [Optional<Any>.Route: String] = [:]
+			@Published var values: [Optional<Any>.Route: String?] = [:]
 			
 			func set(_ route: Optional<Any>.Route, to value: String?) {
 				values[route] = value
 			}
+			
+			func clear() {
+				values = [:]
+			}
 		}
 		
 		let result = Result()
+		var promise: Optional = expectation()
 		
+        await result.$values.map(\.count).filter{ $0 == routes.count }.sink { count in
+			promise?.fulfill()
+			promise = nil
+		}.store(in: &bag)
+
 		for route in routes {
 			Task.detached {
 				for await value in pond.stream(route) {
@@ -117,27 +137,7 @@ final class Pond™: Hopes {
 			}
 		}
 
-		let promise = [expectation(), expectation()]
-		let done: Optional<Any>.Route = ["well", "done", "okey", "dokey"]
-
-		Task.detached {
-			for await i in pond.stream(done).filter(Int.self) {
-				promise[i].fulfill()
-			}
-		}
-
-		Task.detached {
-			for version in 1...3 {
-				for route in routes {
-					let route = db.route(for: route, version: version)
-					await db.store.set(route, to: "✅ v\(version)")
-				}
-			}
-			await db.store.set(db.route(for: done, version: 1), to: 0)
-			await db.store.set(db.route(for: done, version: 3), to: 1)
-		}
-
-		wait(for: promise[0], timeout: 10)
+		await waitForExpectations(timeout: 1)
 
 		for route in routes {
 			let v1 = db.route(for: route, version: 1)
@@ -146,17 +146,21 @@ final class Pond™: Hopes {
 			let r = await db.store.data[v3] as? String == "✅ v3"
 			hope(l) == r
 		}
-
+		
 		let v1 = await result.values
-		hope.true(v1.map(\.value).allSatisfy{ $0 == "✅ v1" })
-
-		await db.setVersion(to: "v/3.0/")
-		wait(for: promise[1], timeout: 10)
+		hope.true(v1.compactMap(\.value).allSatisfy{ $0 == "✅ v1" })
 		
-		let v3 = await result.values
-		hope.true(v3.map(\.value).allSatisfy{ $0 == "✅ v3" })
-		
-		hope(v1.keys) == v3.keys
+        await result.clear()
+        promise = expectation()
+        
+        await db.setVersion(to: "v/3.0/")
+        
+        await waitForExpectations(timeout: 1)
+        
+        let v3 = await result.values
+        
+        hope.true(v3.compactMap(\.value).allSatisfy{ $0 == "✅ v3" })
+        hope(v1.keys) == v3.keys
 	}
 }
 

@@ -2,6 +2,10 @@
 // github.com/screensailor 2021
 //
 
+@globalActor actor TestActor {
+	static let shared = TestActor()
+}
+
 extension Task where Success == Never, Failure == Never {
     
     @inlinable static func sleep(seconds duration: Double) async throws {
