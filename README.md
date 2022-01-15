@@ -1,6 +1,6 @@
 # Optional Subscripts
 
-All equality expressions below return `true`:
+All equality expressions in this document return `true`:
 ```swift
 import OptionalSubscripts
 
@@ -56,7 +56,7 @@ await o.set("me", to: [nil, nil, ["you": "💚"]])
 
 ```
 
-There is also `Any?.Pond` actor that turns a chunky data source (like a document-oriented database) into routed data streams of arbitrary granularity:
+The package also includes `Any?.Pond` actor that turns a chunky data source (like a document-oriented database) into routed data streams of arbitrary granularity:
 
 ```swift 
 let db = SomeDatabase() // conforms to Geyser protocol and streams entire documents
