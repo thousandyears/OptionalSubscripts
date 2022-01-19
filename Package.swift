@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "OptionalSubscripts",
-    platforms: [.macOS(.v12), .iOS(.v14)],
+    platforms: [.macOS(.v11), .iOS(.v14)],
     products: [
         .library(name: "OptionalSubscripts", targets: ["OptionalSubscripts"]),
     ],
