@@ -8,20 +8,17 @@ final class ValueActor™: Hopes {
         
         let o = ValueStore("❤️")
         
-        let stream = await o.stream().prefix(3)
+        let promise = expectation()
+        var bag: Set<AnyCancellable> = []
         
-        var all: [String] = []
+        await o.stream(bufferingPolicy: .unbounded).publisher().prefix(3).collect().sink { o in
+            hope(o) == ["❤️", "💛", "💚"]
+            promise.fulfill()
+        }.store(in: &bag)
         
-        for await x in stream {
-            if all.isEmpty {
-                Task.detached {
-                    await o.set(to: "💛")
-                    await o.set(to: "💚")
-                }
-            }
-            all.append(x)
-        }
-        
-        hope(all) == ["❤️", "💛", "💚"]
+        await o.set(to: "💛")
+        await o.set(to: "💚")
+
+        await waitForExpectations(timeout: 1)
     }
 }
