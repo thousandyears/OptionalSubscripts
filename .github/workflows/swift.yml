@@ -2,9 +2,9 @@ name: Swift
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ trunk ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ trunk ]
 
 jobs:
   build:
