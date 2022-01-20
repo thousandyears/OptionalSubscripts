@@ -1,3 +1,4 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/screensailor/OptionalSubscripts/actions/workflows/tests.yml/badge.svg)](https://github.com/screensailor/OptionalSubscripts/actions/workflows/tests.yml)
 # Optional Subscripts
 
