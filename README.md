@@ -1,3 +1,4 @@
+[![Swift](https://github.com/screensailor/OptionalSubscripts/actions/workflows/swift.yml/badge.svg)](https://github.com/screensailor/OptionalSubscripts/actions/workflows/swift.yml)
 # Optional Subscripts
 
 All equality expressions in this document return `true`:
