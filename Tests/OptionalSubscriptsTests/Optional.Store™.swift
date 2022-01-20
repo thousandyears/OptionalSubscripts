@@ -235,7 +235,7 @@ extension OptionalStore™ {
             promise.fulfill()
         }
         
-        await waitForExpectations(timeout: 1)
+        await waitForExpectations(timeout: 10)
         
         let unbatched = try await o.data.json(.sortedKeys)
         let batched = try await o2.data.json(.sortedKeys)
@@ -272,7 +272,7 @@ extension OptionalStore™ {
             count.o += 1
         }.store(in: &bag)
         
-        await o2.publisher(for: bbRoute, bufferingPolicy: .unbounded).print("✅ publisher").sink { o in
+        await o2.publisher(for: bbRoute, bufferingPolicy: .unbounded).sink { o in
             count.o2 += 1
             bb = o
         }.store(in: &bag)
@@ -296,7 +296,7 @@ extension OptionalStore™ {
             promise.fulfill()
         }
         
-        await waitForExpectations(timeout: 1)
+        await waitForExpectations(timeout: 10)
 
         let unbatched = try await o.data.json(.sortedKeys)
         let batched = try await o2.data.json(.sortedKeys)
