@@ -1,4 +1,4 @@
-[![Swift](https://github.com/screensailor/OptionalSubscripts/actions/workflows/swift.yml/badge.svg)](https://github.com/screensailor/OptionalSubscripts/actions/workflows/swift.yml)
+[![Tests](https://github.com/screensailor/OptionalSubscripts/actions/workflows/tests.yml/badge.svg)](https://github.com/screensailor/OptionalSubscripts/actions/workflows/tests.yml)
 # Optional Subscripts
 
 All equality expressions in this document return `true`:
