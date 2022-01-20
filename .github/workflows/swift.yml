@@ -7,20 +7,16 @@ on:
     branches: [ trunk ]
 
 jobs:
-  test:
+  build:
 
     runs-on: macos-latest
-    
-    strategy:
-      matrix:
-        destination: ['platform=iOS Simulator,OS=15.2,name=iPhone 13']
-        xcode: ['/Applications/Xcode_13.2.1.app/Contents/Developer']
-        
+
     steps:
-    - uses: actions/checkout@v2      
-    - name: Build and test
-      run: bundle exec fastlane scan --destination "${destination}"
-      env:
-        destination: ${{ matrix.destination }}
-        DEVELOPER_DIR: ${{ matrix.xcode }}
-        
+    - uses: actions/checkout@v2
+    - name: Setup Xcode
+      shell: bash
+      run: sudo xcode-select -switch /Applications/Xcode_13.2.1.app
+    - name: Build
+      run: swift build -v
+    - name: Run tests
+      run: swift test -v --parallel
