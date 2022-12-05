@@ -58,7 +58,7 @@ public struct AsyncSequencePublisher<Sequence>: Publisher where Sequence: AsyncS
         private var demand: Subscribers.Demand = .none
         private var task: Task<(), Error>?
 
-        nonisolated init(subscriber: Subscriber, sequence: Sequence?) {
+        init(subscriber: Subscriber, sequence: Sequence?) {
             self.sequence = sequence
             self.subscriber = subscriber
         }

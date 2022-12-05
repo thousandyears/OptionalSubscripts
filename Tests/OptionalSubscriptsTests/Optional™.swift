@@ -34,6 +34,23 @@ final class Optional™: Hopes {
         o["one", "two"] = nil
         hope.true(o[] == nil)
     }
+
+    func test_contains() throws {
+
+        var o: Any?
+
+        o["one", 2] = ["three": 4]
+
+        XCTAssertTrue(o.contains([]))
+        XCTAssertTrue(o.contains(["one"]))
+        XCTAssertTrue(o.contains(["one", 2]))
+        XCTAssertTrue(o.contains(["one", 2, "three"]))
+
+        XCTAssertFalse(o.contains(["two"]))
+        XCTAssertFalse(o.contains(["one", 2, "three", 4]))
+        XCTAssertFalse(o.contains(["one", 2, 3]))
+        XCTAssertFalse(o.contains(["two", 3, "four"]))
+    }
 }
 
 extension Optional™ {
