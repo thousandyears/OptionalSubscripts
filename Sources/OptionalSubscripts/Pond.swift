@@ -148,7 +148,7 @@ private extension Optional.Pond where Wrapped == Any {
     
     func count(for id: Source.GushID, of change: Int) {
         guard let o = gushSources[id] else {
-            assertionFailure("😱 Reference counting (\(change)) of non existant sourece '\(id)'")
+            assertionFailure("😱 Reference counting (\(change)) of non existent source '\(id)'")
             return
         }
         let result = Int(o.referenceCount) + change

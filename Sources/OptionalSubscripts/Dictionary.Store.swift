@@ -134,6 +134,13 @@ public extension Dictionary.Store {
 }
 
 public extension Dictionary.Store {
+
+    func contains(_ key: Key) -> Bool {
+        dictionary[key] != nil
+    }
+}
+
+public extension Dictionary.Store {
     
     enum Error: Swift.Error {
         case nilAt(key: Key)

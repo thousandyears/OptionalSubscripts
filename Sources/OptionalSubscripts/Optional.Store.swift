@@ -175,6 +175,13 @@ public extension Optional.Store where Wrapped == Any {
     }
 }
 
+public extension Optional<Any>.Store {
+
+    @inlinable func contains<Route>(_ route: Route) -> Bool where Route: Collection, Route.Index == Int, Route.Element == Location {
+        data.contains(route)
+    }
+}
+
 public extension Optional.Store where Wrapped == Any {
     
     enum Error: Swift.Error {

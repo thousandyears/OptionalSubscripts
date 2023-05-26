@@ -143,6 +143,22 @@ public extension Optional where Wrapped == Any {
             self = o
         }
     }
+
+    @inlinable func contains(child location: Location) -> Bool {
+        switch (location, self) {
+        case (.key(let key), let dictionary as [String: Any]):
+            return dictionary.keys.contains(key)
+        case (.index(let index), let array as [Any]):
+            return index >= 0 && index < array.count
+        case _:
+            return false
+        }
+    }
+
+    @inlinable func contains<Route>(_ route: Route) -> Bool where Route: Collection, Route.Index == Int, Route.Element == Location {
+        guard let next = route.first else { return true }
+        return contains(child: next) && self[next].contains(route.dropFirst())
+    }
 }
 
 #if canImport(Foundation)
